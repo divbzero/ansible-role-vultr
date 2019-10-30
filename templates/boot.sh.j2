@@ -1,0 +1,72 @@
+#!/bin/bash
+
+
+# ssh
+
+declare -A authorized_keys=(
+  ['{{ vultr_server_user }}']='{{ vultr_server_ssh_key }}'
+)
+
+declare -a sudoers=(
+  '{{ vultr_server_user }}'
+)
+
+for user in "${!authorized_keys[@]}"; do
+
+  # add user:group and create home directory
+  useradd --user-group -m -s /bin/bash $user
+
+  # add authorized key
+  mkdir -p /home/$user/.ssh
+  echo "${authorized_keys[$user]}" >> /home/$user/.ssh/authorized_keys
+  chmod 600 /home/$user/.ssh/authorized_keys
+  chown -R $user:$user /home/$user
+done
+
+for user in "${sudoers[@]}"; do
+
+  # add sudo privileges
+  echo "$user ALL=(ALL) NOPASSWD:ALL" >> /etc/sudoers.d/$user
+done
+
+# configure ssh
+sed -i 's/^#\s*PasswordAuthentication\s.*$/PasswordAuthentication no/' /etc/ssh/sshd_config
+sed -i 's/^#\s*PermitRootLogin\s.*$/PermitRootLogin no/' /etc/ssh/sshd_config
+sed -i 's/^#\s*Port\s.*$/Port {{ vultr_server_ssh_port }}/' /etc/ssh/sshd_config
+service ssh restart
+
+# enable byobu for all users
+echo 'byobu byobu/launch-by-default boolean true' | debconf-set-selections && dpkg-reconfigure byobu --frontend=noninteractive
+
+
+# apt
+
+packages='
+  fail2ban
+  mosh
+  sudo
+  ufw
+  unattended-upgrades
+'
+
+# install packages
+apt -q -y update
+apt -q -y install $packages
+
+# configure unattended upgrades
+cat > /etc/apt/apt.conf.d/10periodic << EOF
+APT::Periodic::Update-Package-Lists "1";
+APT::Periodic::Download-Upgradeable-Packages "1";
+APT::Periodic::AutocleanInterval "7";
+APT::Periodic::Unattended-Upgrade "1";
+EOF
+
+
+# ufw
+
+# configure firewall
+ufw allow {{ vultr_server_ssh_port }}/tcp
+ufw allow mosh
+
+# enable firewall
+ufw enable

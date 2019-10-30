@@ -1,0 +1,18 @@
+- name: update startup script
+  local_action:
+    module: vultr_startup_script
+    name: boot.sh
+    script: "{{ lookup('template', 'boot.sh.j2') }}"
+
+- name: start server
+  local_action:
+    module: vultr_server
+    name: "{{ vultr_server_name|title }}"
+    os: "{{ vultr_server_os }}"
+    plan: "{{ vultr_server_plan }}"
+    region: "{{ vultr_server_region }}"
+    hostname: "{{ vultr_server_name }}"
+    auto_backup_enabled: yes
+    startup_script: boot.sh
+    notify_activate: yes
+    state: started
