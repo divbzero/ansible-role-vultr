@@ -16,3 +16,9 @@
     startup_script: boot.sh
     notify_activate: yes
     state: started
+  register: vultr_server_result
+
+- name: add server to inventory
+  add_host:
+    group: "{{ vultr_server_name }}"
+    name: "{{ vultr_server_result.vultr_server.v4_main_ip }}:{{ vultr_server_ssh_port }}"
