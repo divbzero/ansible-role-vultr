@@ -4,11 +4,15 @@
 # ssh
 
 declare -A authorized_keys=(
-  ['{{ vultr_server_user }}']='{{ vultr_server_ssh_key }}'
+  {% for user, authorized_key in vultr_server_ssh_users.items() %}
+  ['{{ user }}']='{{ authorized_key }}'
+  {% endfor %}
 )
 
 declare -a sudoers=(
-  '{{ vultr_server_user }}'
+  {% for user in vultr_server_sudoers %}
+  '{{ user }}'
+  {% endfor %}
 )
 
 for user in "${!authorized_keys[@]}"; do
@@ -26,7 +30,7 @@ done
 for user in "${sudoers[@]}"; do
 
   # add sudo privileges
-  echo "$user ALL=(ALL) NOPASSWD:ALL" >> /etc/sudoers.d/$user
+  echo "$user ALL=(ALL) NOPASSWD:ALL" > /etc/sudoers.d/$user
 done
 
 # configure ssh
