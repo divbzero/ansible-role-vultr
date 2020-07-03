@@ -39,13 +39,11 @@ sed -i 's/^#\s*PermitRootLogin\s.*$/PermitRootLogin no/' /etc/ssh/sshd_config
 sed -i 's/^#\s*Port\s.*$/Port {{ vultr_server_ssh_port }}/' /etc/ssh/sshd_config
 service ssh restart
 
-# enable byobu for all users
-echo 'byobu byobu/launch-by-default boolean true' | debconf-set-selections && dpkg-reconfigure byobu --frontend=noninteractive
-
 
 # apt
 
 packages='
+  byobu
   fail2ban
   mosh
   sudo
@@ -56,6 +54,9 @@ packages='
 # install packages
 apt -q -y update
 apt -q -y install $packages
+
+# enable byobu for all users
+echo 'byobu byobu/launch-by-default boolean true' | debconf-set-selections && dpkg-reconfigure byobu --frontend=noninteractive
 
 # configure unattended upgrades
 cat > /etc/apt/apt.conf.d/10periodic << EOF

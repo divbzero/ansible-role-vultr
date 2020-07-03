@@ -1,4 +1,4 @@
-vultr_server_os: Ubuntu 18.04 x64
+vultr_server_os: Debian 10 x64 (buster)
 vultr_server_plan: 512 MB RAM,10 GB SSD,0.50 TB BW
 vultr_server_region: New Jersey
 vultr_server_name: server
